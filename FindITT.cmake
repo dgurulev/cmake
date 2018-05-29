@@ -25,17 +25,19 @@
 #
 # ::
 #
-#   SEAPI_ROOT           - Preferred installation path for Intel® Single Event API (Intel® SEAPI)
-#                          (https://github.com/intel/IntelSEAPI)
-#   ITT_ROOT             - Preferred installation path for standalone ITT library
+#   SEAPI_ROOT                 - Preferred installation path for Intel® Single Event API (Intel® SEAPI)
+#                                (https://github.com/intel/IntelSEAPI)
+#   ITT_ROOT                   - Preferred installation path for standalone ITT library
 #   INTEL_LIBITTNOTIFY32/
-#   INTEL_LIBITTNOTIFY64 - Preferred ITT library directory
+#   INTEL_LIBITTNOTIFY64       - Preferred ITT library directory
+#   VTUNE_AMPLIFIER_<YEAR>_DIR - VTune Amplifier XE installation path (set vy amplxe-vars.sh/bat script)
+#                                Set [ITT_NO_VTUNE_PATH] to [OFF] if you don't want to search package on VTune path
 #
 # Other variables one may set to control this module are
 #
 # ::
 #
-#   OTT_DEBUG            - Set to ON to enable debug output from FindITT.
+#   ITT_DEBUG            - Set to ON to enable debug output from FindITT.
 #                          Please enable this before filing any bug report.
 #
 # Example to find ITT headers and libraries
@@ -49,19 +51,8 @@
 #     target_link_libraries(foo ${ITT_LIBRARIES})
 #   endif()
 
-find_path (ITT_INCLUDE_DIR
-	NAMES ittnotify.h
-		HINTS
-			$ENV{ITT_ROOT}
-			$ENV{SEAPI_ROOT}/ittnotify
-		PATH_SUFFIXES
-			include
-)
-
-if (ITT_DEBUG)
-	message(STATUS "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ] "
-	               "ITT_INCLUDE_DIR = ${ITT_INCLUDE_DIR}")
-endif()
+unset (_itt_INC_DIR_HINT)
+unset (_itt_LIB_DIR_HINT)
 
 set (_itt_ARC "")
 if (${CMAKE_CXX_COMPILER_ARCHITECTURE_ID} MATCHES "x86")
@@ -78,63 +69,90 @@ if ("x${_itt_ARC}" STREQUAL "x")
 	endif()
 endif()
 
+list (APPEND _itt_INC_DIR_HINT
+	$ENV{ITT_ROOT}
+	$ENV{SEAPI_ROOT}/ittnotify
+)
+
+set (_itt_LIBITTNOTIFY $ENV{INTEL_LIBITTNOTIFY${_itt_ARC}})
+if (_itt_LIBITTNOTIFY)
+	get_filename_component (_itt_LIB_DIR_HINT ${_itt_LIBITTNOTIFY} DIRECTORY)
+	get_filename_component (_itt_INC_DIR_HINT ${_itt_LIB_DIR_HINT} DIRECTORY)
+endif()
+
+list (APPEND _itt_INC_DIR_HINT
+	${_itt_INC_DIR_HINT}/ittnotify
+)
+
+if (NOT ITT_NO_VTUNE_PATH)
+	execute_process (COMMAND "${CMAKE_COMMAND}" "-E" "environment"
+		OUTPUT_VARIABLE _itt_ENV_LIST
+	)
+
+	string (REGEX MATCH "VTUNE_AMPLIFIER_[0-9]+_DIR"
+		_itt_VTUNE_DIR ${_itt_ENV_LIST}
+	)
+endif()
+
+if (_itt_VTUNE_DIR)
+	list (APPEND _itt_INC_DIR_HINT $ENV{${_itt_VTUNE_DIR}})
+endif()
+
+if (ITT_DEBUG)
+	message(STATUS "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ] "
+					"_itt_INC_DIR_HINT = ${_itt_INC_DIR_HINT}")
+endif()
+
+find_path (ITT_INCLUDE_DIR
+	NAMES ittnotify.h
+		HINTS
+			${_itt_INC_DIR_HINT}
+		PATH_SUFFIXES
+			include
+)
+
+if (ITT_DEBUG)
+	message(STATUS "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ] "
+	               "ITT_INCLUDE_DIR = ${ITT_INCLUDE_DIR}")
+endif()
+
 if (ITT_DEBUG)
 	message(STATUS "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ] "
 	               "_itt_ARC = ${_itt_ARC}")
 endif()
 
 if (ITT_INCLUDE_DIR)
-	get_filename_component (_itt_LIB_DIR_HINT ${_itt_INC_DIR} DIRECTORY)
-	get_filename_component (_itt_LIB_DIR_HINT ${_itt_LIB_DIR_HINT} DIRECTORY)
+	get_filename_component (_itt_INC_DIR_HINT ${ITT_INCLUDE_DIR} DIRECTORY)
+	list (APPEND _itt_LIB_DIR_HINT ${_itt_INC_DIR_HINT})
 endif()
+
+list (APPEND _itt_LIB_DIR_HINT
+	$ENV{ITT_ROOT}
+	$ENV{SEAPI_ROOT}
+)
 
 if (ITT_DEBUG)
 	message (STATUS "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ] "
 	               "_itt_LIB_DIR_HINT = ${_itt_LIB_DIR_HINT}")
 endif()
 
-set (_itt_LIBITTNOTIFY $ENV{INTEL_LIBITTNOTIFY${_itt_ARC}})
-if (_itt_LIBITTNOTIFY)
-	get_filename_component (_itt_LIBITTNOTIFY ${_itt_LIBITTNOTIFY} DIRECTORY)
-	string (APPEND _itt_LIB_DIR_HINT ${_itt_LIBITTNOTIFY})
-endif()
-
 find_library (ITT_LIBRARY
 	NAMES
 		libittnotify
 		libittnotify${_itt_ARC}
+		ittnotify
 		ittnotify${_itt_ARC}
 	HINTS
-		$ENV{ITT_ROOT}
-		$ENV{SEAPI_ROOT}
 		${_itt_LIB_DIR_HINT}
 	PATH_SUFFIXES
 		lib${_itt_ARC}
+		lib
 		bin
 )
 
 if (ITT_DEBUG)
 	message(STATUS "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ] "
 	               "ITT_LIBRARY = ${ITT_LIBRARY}")
-endif()
-
-if (NOT ITT_INCLUDE_DIR)
-	#try to find include near INTEL_LIBITTNOTIFY path
-	get_filename_component (_itt_INC_DIR_HINT ${_itt_LIB_DIR} DIRECTORY)
-	get_filename_component (_itt_INC_DIR_HINT ${_itt_INC_DIR_HINT} DIRECTORY)
-	if (ITT_DEBUG)
-		message(STATUS "[ ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE} ] "
-					   "_itt_INC_DIR_HINT = ${_itt_INC_DIR_HINT}")
-	endif()
-
-	find_path (ITT_INCLUDE_DIR
-		NAMES ittnotify.h
-			HINTS
-				${_itt_INC_DIR_HINT}
-				${_itt_INC_DIR_HINT}/ittnotify
-			PATH_SUFFIXES
-				include
-	)
 endif()
 
 # handle the QUIETLY and REQUIRED arguments and set MFX_FOUND to TRUE if
