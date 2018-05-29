@@ -1,3 +1,6 @@
+# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
+# file Copyright.txt or https://cmake.org/licensing for details.
+
 #.rst:
 # FindITT
 # ---------
@@ -13,7 +16,7 @@
 #     )
 #
 # This module finds headers and libraries
-# For the former case results are reported in variables
+# Results are reported in variables
 #
 # ::
 #
@@ -29,14 +32,15 @@
 #                                (https://github.com/intel/IntelSEAPI)
 #   ITT_ROOT                   - Preferred installation path for standalone ITT library
 #   INTEL_LIBITTNOTIFY32/
-#   INTEL_LIBITTNOTIFY64       - Preferred ITT library directory
-#   VTUNE_AMPLIFIER_<YEAR>_DIR - VTune Amplifier XE installation path (set vy amplxe-vars.sh/bat script)
-#                                Set [ITT_NO_VTUNE_PATH] to [OFF] if you don't want to search package on VTune path
+#   INTEL_LIBITTNOTIFY64       - Full path to the ITT library (32/64 .lib/.a)
+#   VTUNE_AMPLIFIER_<YEAR>_DIR - VTune Amplifier XE installation path (set by amplxe-vars.sh/bat script)
+#                                See [ITT_NO_VTUNE_PATH] description below
 #
 # Other variables one may set to control this module are
 #
 # ::
 #
+#   ITT_NO_VTUNE_PATH    - Set [ITT_NO_VTUNE_PATH] to [OFF] if you don't want to search package on VTune path
 #   ITT_DEBUG            - Set to ON to enable debug output from FindITT.
 #                          Please enable this before filing any bug report.
 #
