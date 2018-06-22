@@ -54,6 +54,14 @@
 #     add_executable(foo foo.cc)
 #     target_link_libraries(foo ${ITT_LIBRARIES})
 #   endif()
+# 
+# Example to find ITT library and use imported targets::
+#
+# ::
+#
+#   find_package(ITT REQUIRED)
+#   add_executable(foo foo.cc)
+#   target_link_libraries(foo ITT::ITT)
 
 unset (_itt_INC_DIR_HINT)
 unset (_itt_LIB_DIR_HINT)
@@ -171,4 +179,20 @@ mark_as_advanced(ITT_INCLUDE_DIR ITT_LIBRARY)
 if (ITT_FOUND)
 	set (ITT_INCLUDE_DIRS ${ITT_INCLUDE_DIR})
 	set (ITT_LIBRARIES  ${ITT_LIBRARY})
+
+	if (NOT TARGET ITT::ITT)
+		add_library(ITT::ITT UNKNOWN IMPORTED)
+
+		set_target_properties(ITT::ITT PROPERTIES
+			INTERFACE_INCLUDE_DIRECTORIES "${ITT_INCLUDE_DIRS}"
+		)
+
+		set_target_properties(ITT::ITT PROPERTIES
+			IMPORTED_LOCATION "${ITT_LIBRARIES}"
+		)
+
+		set_target_properties(ITT::ITT PROPERTIES
+			INTERFACE_LINK_LIBRARIES "${CMAKE_DL_LIBS}"
+		)
+	endif()
 endif()
