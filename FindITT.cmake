@@ -13,10 +13,10 @@
 #
 #   find_package(ITT
 #     [REQUIRED]         # Fail with error if ITT is not found
-#     )
+#   )
 #
 # This module finds headers and libraries
-# Results are reported in variables
+# For the former case results are reported in variables
 #
 # ::
 #
@@ -30,19 +30,21 @@
 #
 #   SEAPI_ROOT                 - Preferred installation path for Intel® Single Event API (Intel® SEAPI)
 #                                (https://github.com/intel/IntelSEAPI)
-#   ITT_ROOT                   - Preferred installation path for standalone ITT library
+#   ITT_ROOT/
+#   CMAKE_ITT_HOME             - Preferred installation path for standalone ITT library
 #   INTEL_LIBITTNOTIFY32/
-#   INTEL_LIBITTNOTIFY64       - Full path to the ITT library (32/64 .lib/.a)
-#   VTUNE_AMPLIFIER_<YEAR>_DIR - VTune Amplifier XE installation path (set by amplxe-vars.sh/bat script)
-#                                See [ITT_NO_VTUNE_PATH] description below
+#   INTEL_LIBITTNOTIFY64       - Preferred ITT library directory
+#   VTUNE_AMPLIFIER_<YEAR>_DIR - VTune Amplifier XE installation path which is set by amplxe-vars.sh/bat script
+#                                See notes about [ITT_NO_VTUNE_PATH] below
+#   CMAKE_VTUNE_HOME           - Explicitly defined VTune Amplifier XE installation path
 #
 # Other variables one may set to control this module are
 #
 # ::
 #
-#   ITT_NO_VTUNE_PATH    - Set [ITT_NO_VTUNE_PATH] to [OFF] if you don't want to search package on VTune path
 #   ITT_DEBUG            - Set to ON to enable debug output from FindITT.
 #                          Please enable this before filing any bug report.
+#   ITT_NO_VTUNE_PATH    - Set to ON to not try to find VTUNE_AMPLIFIER_<YEAR>_DIR environment variable
 #
 # Example to find ITT headers and libraries
 #
@@ -84,6 +86,8 @@ endif()
 list (APPEND _itt_INC_DIR_HINT
 	$ENV{ITT_ROOT}
 	$ENV{SEAPI_ROOT}/ittnotify
+	${CMAKE_ITT_HOME}
+	${CMAKE_VTUNE_HOME}
 )
 
 set (_itt_LIBITTNOTIFY $ENV{INTEL_LIBITTNOTIFY${_itt_ARC}})
